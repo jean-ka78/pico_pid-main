@@ -171,4 +171,4 @@ class PIDController:
 
     def print_status(self):
         elapsed_time = time.time() - self.start_time
-        print(f"E_1: {self.E_1:.2f}, D_T: {self.D_T:.2f}, SUM_D_T: {self.SUM_D_T:.2f}, TIMER_PID_UP: {self.TIMER_PID_UP:.2f}, TIMER_PID_DOWN: {self.TIMER_PID_DOWN:.2f}, UP: {self.UP}, DOWN: {self.DOWN}, Elapsed Time: {elapsed_time:.2f} sec")
+        print(f"PRESENT_VALUE: {self.PRESENT_VALUE:.2f}, E_1: {self.E_1:.2f}, D_T: {self.D_T:.2f}, SUM_D_T: {self.SUM_D_T:.2f}, TIMER_PID_UP: {self.TIMER_PID_UP:.2f}, TIMER_PID_DOWN: {self.TIMER_PID_DOWN:.2f}, UP: {self.UP}, DOWN: {self.DOWN}, Elapsed Time: {elapsed_time:.2f} sec")
