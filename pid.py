@@ -4,10 +4,8 @@ import ds18x20
 import onewire
 import config
 
-
 def constrain(val, min_val, max_val):
     return max(min_val, min(max_val, val))
-
 
 class PIDController:
     def __init__(self):
@@ -42,7 +40,6 @@ class PIDController:
         self.DOWN = False
 
         # Налаштування GPIO
-        # Ініціалізація пінів
         self.RELAY_UP_PIN = Pin(config.RELAY_UP_PIN, Pin.OUT)
         self.RELAY_DOWN_PIN = Pin(config.RELAY_DOWN_PIN, Pin.OUT)
         self.RELAY_UP_PIN.value(0)
@@ -54,7 +51,7 @@ class PIDController:
         self.roms = self.ds_sensor.scan()
         if self.roms:
             self.sensor_available = True
-            self.PRESENT_VALUE = self.read_temperature()  # Ініціалізація температури
+            self.PRESENT_VALUE = self.read_temperature()
         else:
             self.sensor_available = False
             self.PRESENT_VALUE = 0.0
@@ -63,26 +60,25 @@ class PIDController:
         self.start_time = time.time()
 
     def read_temperature(self):
-        # Зчитування температури з датчика DS18B20
         try:
             if self.sensor_available:
                 self.ds_sensor.convert_temp()
-                time.sleep(1)  # Затримка для зчитування температури
+                time.sleep(0.01)
                 temp = self.ds_sensor.read_temp(self.roms[0])
-                
                 if temp is not None:
                     return temp
         except Exception as e:
             print(f"Error reading temperature: {e}")
-        return 0.0  # Повертаємо значення за замовчуванням у разі помилки або відсутності сенсора
+        return 0.0
 
     def run(self):
         try:
             while True:
                 if self.sensor_available:
-                    self.PRESENT_VALUE = self.read_temperature()
+                    self.PRESENT_VALUE = 0.9 * self.PRESENT_VALUE + 0.1 * self.read_temperature()
+#                     self.PRESENT_VALUE = 
                 self.update()
-                self.control()
+#                 self.control_relay()
                 self.print_status()
                 time.sleep(0.01)
         except KeyboardInterrupt:
@@ -107,7 +103,7 @@ class PIDController:
         if self.TIMER_PID == 0.0 and not self.PID_PULSE:
             self.PID_PULSE = 1
             self.MILLIS_FLOAT_1 = MILLIS_FLOAT_S
-            self.D_T = self.K_P * (self.E_1 - self.E_2 + self.CYCLE * self.E_2 / self.K_I + 
+            self.D_T = self.K_P * (self.E_1 - self.E_2 + self.CYCLE * self.E_2 / self.K_I +
                                    self.K_D * (self.E_1 - 2 * self.E_2 + self.E_3) / self.CYCLE) * self.VALVE / 100.0
             self.E_3 = self.E_2
             self.E_2 = self.E_1
@@ -149,22 +145,30 @@ class PIDController:
         if self.TIMER_100MS >= 0.1 or self.TIMER_100MS < 0.0:
             self.TIMER_100MS = 0.0
 
-    def control(self):
+#     def control_relay(self):
         if not self.sensor_available:
             self.RELAY_UP_PIN.value(0)
             self.RELAY_DOWN_PIN.value(0)
             return
 
         self.UP = (((self.SUM_D_T >= self.TIMER_PID and self.SUM_D_T >= 0.5) or self.D_T >= self.CYCLE - 0.5 or self.TIMER_PID_UP >= self.VALVE) and self.AUTO_HAND or (self.HAND_UP and not self.AUTO_HAND)) and self.ON_OFF and not self.DOWN
-        if self.UP and self.TIMER_PID_UP < self.VALVE:
-            self.TIMER_PID_UP += 0.1
+
+        if self.UP:
+            if self.TIMER_PID_UP < self.VALVE:
+                self.TIMER_PID_UP += 0.1
+            else:
+                self.TIMER_PID_UP = self.VALVE
             self.RELAY_UP_PIN.value(1)
         else:
             self.RELAY_UP_PIN.value(0)
 
         self.DOWN = (((self.SUM_D_T <= -self.TIMER_PID and self.SUM_D_T <= -0.5) or self.D_T <= -self.CYCLE + 0.5 or self.TIMER_PID_DOWN >= self.VALVE) and self.AUTO_HAND or (self.HAND_DOWN and not self.AUTO_HAND)) and self.ON_OFF and not self.UP
-        if self.DOWN and self.TIMER_PID_DOWN < self.VALVE:
-            self.TIMER_PID_DOWN += 0.1
+
+        if self.DOWN:
+            if self.TIMER_PID_DOWN < self.VALVE:
+                self.TIMER_PID_DOWN += 0.1
+            else:
+                self.TIMER_PID_DOWN = self.VALVE
             self.RELAY_DOWN_PIN.value(1)
         else:
             self.RELAY_DOWN_PIN.value(0)
@@ -172,3 +176,7 @@ class PIDController:
     def print_status(self):
         elapsed_time = time.time() - self.start_time
         print(f"PRESENT_VALUE: {self.PRESENT_VALUE:.2f}, E_1: {self.E_1:.2f}, D_T: {self.D_T:.2f}, SUM_D_T: {self.SUM_D_T:.2f}, TIMER_PID_UP: {self.TIMER_PID_UP:.2f}, TIMER_PID_DOWN: {self.TIMER_PID_DOWN:.2f}, UP: {self.UP}, DOWN: {self.DOWN}, Elapsed Time: {elapsed_time:.2f} sec")
+
+# if __name__ == "__main__":
+#     pid = PIDController()
+#     pid.run()

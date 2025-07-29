@@ -1,11 +1,11 @@
 # PID контролер конфігурація
-SET_VALUE = 30.0
-K_P = 0.2
-K_I = 0.1
-K_D = 0.1
-CYCLE = 10.0
-VALVE = 60.0
-DEAD_ZONE = 5.0
+SET_VALUE = 37.0
+K_P = 0.025
+K_I = 0.2
+K_D = 1.1
+CYCLE = 1.0
+VALVE = 320.0
+DEAD_ZONE = 2.0
 
 # Піни реле та сенсора
 RELAY_UP_PIN = 3
